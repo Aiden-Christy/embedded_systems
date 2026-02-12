@@ -197,6 +197,81 @@
             text-align: center;
         }
 
+        .sliders-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .slider-group {
+            margin-bottom: 20px;
+        }
+
+        .slider-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .slider-label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider:active::-webkit-slider-thumb {
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.8);
+        }
+
+        .slider:active::-moz-range-thumb {
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.8);
+        }
+
+        .slider-value {
+            display: inline-block;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
         .info-row {
             display: flex;
             justify-content: space-between;
@@ -286,6 +361,26 @@
                 </div>
             </div>
             <div class="joystick-inner" id="joystick"></div>
+        </div>
+
+        <div class="sliders-container">
+            <div class="slider-group">
+                <label class="slider-label">Head Horizontal</label>
+                <input type="range" id="headH-slider" min="4000" max="8000" value="6000" class="slider">
+                <span class="slider-value" id="headH-value">6000</span>
+            </div>
+            
+            <div class="slider-group">
+                <label class="slider-label">Head Vertical</label>
+                <input type="range" id="headV-slider" min="4000" max="8000" value="6000" class="slider">
+                <span class="slider-value" id="headV-value">6000</span>
+            </div>
+            
+            <div class="slider-group">
+                <label class="slider-label">Waist</label>
+                <input type="range" id="waist-slider" min="4000" max="8000" value="6000" class="slider">
+                <span class="slider-value" id="waist-value">6000</span>
+            </div>
         </div>
 
         <div class="controls">
@@ -473,6 +568,11 @@
             .then(data => {
                 console.log('Stop command sent:', data);
                 returnToCenter();
+                // Reset sliders to center
+                document.getElementById('headH-slider').value = 6000;
+                document.getElementById('headV-slider').value = 6000;
+                document.getElementById('waist-slider').value = 6000;
+                updateSliderDisplays();
             })
             .catch(err => console.error('Error stopping:', err));
         });
@@ -489,6 +589,51 @@
                 .catch(err => console.error('Error homing:', err));
             }
         });
+
+        // Slider controls
+        const headHSlider = document.getElementById('headH-slider');
+        const headVSlider = document.getElementById('headV-slider');
+        const waistSlider = document.getElementById('waist-slider');
+
+        function updateSliderDisplays() {
+            document.getElementById('headH-value').textContent = headHSlider.value;
+            document.getElementById('headV-value').textContent = headVSlider.value;
+            document.getElementById('waist-value').textContent = waistSlider.value;
+        }
+
+        function sendSliderValues() {
+            fetch('/api/sliders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    headH: parseInt(headHSlider.value),
+                    headV: parseInt(headVSlider.value),
+                    waist: parseInt(waistSlider.value)
+                })
+            })
+            .catch(err => console.error('Error sending slider values:', err));
+        }
+
+        // Update displays and send values when sliders change
+        headHSlider.addEventListener('input', () => {
+            updateSliderDisplays();
+            sendSliderValues();
+        });
+
+        headVSlider.addEventListener('input', () => {
+            updateSliderDisplays();
+            sendSliderValues();
+        });
+
+        waistSlider.addEventListener('input', () => {
+            updateSliderDisplays();
+            sendSliderValues();
+        });
+
+        // Initialize slider displays
+        updateSliderDisplays();
         
         // Connection status
         function updateConnectionStatus(connected) {

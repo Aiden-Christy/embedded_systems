@@ -15,6 +15,9 @@ app = Flask(__name__)
 servo = None
 current_x = 0.0  # -1.0 to 1.0 (left to right)
 current_y = 0.0  # -1.0 to 1.0 (down to up)
+head_h = 6000    # Head horizontal position (4000-8000)
+head_v = 6000    # Head vertical position (4000-8000)
+waist = 6000     # Waist position (4000-8000)
 control_thread = None
 running = False
 
@@ -75,8 +78,8 @@ def calculate_arcade_drive(x, y):
     turn = x     # Positive x = turn right
     
     # Calculate differential steering
-    left = forward + turn
-    right = forward - turn
+    left = forward - turn  # Swapped to fix backwards steering
+    right = forward + turn  # Swapped to fix backwards steering
     
     # Normalize if values exceed range
     max_val = max(abs(left), abs(right))
@@ -93,7 +96,7 @@ def calculate_arcade_drive(x, y):
 
 def control_loop():
     """Background thread that continuously updates robot based on joystick position"""
-    global running, current_x, current_y, servo
+    global running, current_x, current_y, head_h, head_v, waist, servo
     
     print("Control loop started")
     
@@ -105,6 +108,11 @@ def control_loop():
             # Update robot wheels
             rf.move(servo, "lWheel", left_speed)
             rf.move(servo, "rWheel", right_speed)
+            
+            # Update head and waist positions
+            rf.move(servo, "headH", head_h)
+            rf.move(servo, "headV", head_v)
+            rf.move(servo, "waist", waist)
             
             # Small delay to prevent overwhelming the servo controller
             time.sleep(0.05)  # 20Hz update rate
@@ -151,6 +159,40 @@ def update_joystick():
         }), 400
 
 
+@app.route('/api/sliders', methods=['POST'])
+def update_sliders():
+    """Receive slider position updates from the web interface"""
+    global head_h, head_v, waist
+    
+    try:
+        data = request.get_json()
+        
+        if 'headH' in data:
+            head_h = int(data['headH'])
+            head_h = max(4000, min(8000, head_h))
+        
+        if 'headV' in data:
+            head_v = int(data['headV'])
+            head_v = max(4000, min(8000, head_v))
+        
+        if 'waist' in data:
+            waist = int(data['waist'])
+            waist = max(4000, min(8000, waist))
+        
+        return jsonify({
+            'status': 'success',
+            'headH': head_h,
+            'headV': head_v,
+            'waist': waist
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 400
+
+
 @app.route('/api/status', methods=['GET'])
 def get_status():
     """Get current robot status"""
@@ -158,6 +200,9 @@ def get_status():
         'connected': servo is not None,
         'x': current_x,
         'y': current_y,
+        'headH': head_h,
+        'headV': head_v,
+        'waist': waist,
         'running': running
     })
 
@@ -165,13 +210,19 @@ def get_status():
 @app.route('/api/stop', methods=['POST'])
 def emergency_stop():
     """Emergency stop - center the joystick and stop the robot"""
-    global current_x, current_y
+    global current_x, current_y, head_h, head_v, waist
     
     current_x = 0.0
     current_y = 0.0
+    head_h = 6000
+    head_v = 6000
+    waist = 6000
     
     if servo:
         rf.stop(servo)
+        rf.move(servo, "headH", 6000)
+        rf.move(servo, "headV", 6000)
+        rf.move(servo, "waist", 6000)
     
     return jsonify({'status': 'stopped'})
 
