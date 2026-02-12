@@ -152,7 +152,29 @@
             gap: 15px;
             margin-top: 30px;
             flex-wrap: wrap;
-            justify-content: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .left-controls {
+            flex: 0 0 auto;
+        }
+
+        .center-controls {
+            flex: 0 0 auto;
+        }
+
+        .right-controls {
+            flex: 0 0 auto;
+            display: flex;
+            gap: 8px;
         }
 
         .btn {
@@ -166,11 +188,14 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             text-transform: uppercase;
             letter-spacing: 1px;
+            white-space: nowrap;
         }
 
         .btn-stop {
             background: #f44336;
             color: white;
+            font-size: 18px;
+            padding: 15px 30px;
         }
 
         .btn-stop:active {
@@ -186,6 +211,22 @@
         .btn-home:active {
             background: #1976D2;
             transform: scale(0.95);
+        }
+
+        .btn-voice {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 18px;
+            font-size: 14px;
+        }
+
+        .btn-voice:active {
+            background: linear-gradient(135deg, #5568d3 0%, #63398d 100%);
+            transform: scale(0.95);
+        }
+
+        .btn-voice:hover {
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
         }
 
         .info-panel {
@@ -320,6 +361,31 @@
                 padding: 10px 20px;
                 font-size: 14px;
             }
+
+            .btn-stop {
+                font-size: 16px;
+                padding: 12px 24px;
+            }
+
+            .btn-voice {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .control-group {
+                justify-content: center;
+            }
+
+            .right-controls {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
         }
 
         /* Landscape mobile */
@@ -384,8 +450,20 @@
         </div>
 
         <div class="controls">
-            <button class="btn btn-stop" id="stop-btn">⏹ Stop</button>
-            <button class="btn btn-home" id="home-btn">🏠 Home</button>
+            <div class="control-group left-controls">
+                <button class="btn btn-stop" id="stop-btn">⏹ Emergency Stop</button>
+            </div>
+            
+            <div class="control-group center-controls">
+                <button class="btn btn-home" id="home-btn">🏠 Home</button>
+            </div>
+            
+            <div class="control-group right-controls">
+                <button class="btn btn-voice" id="voice-btn-1">🎤 Lifestyle</button>
+                <button class="btn btn-voice" id="voice-btn-2">💖 Charm</button>
+                <button class="btn btn-voice" id="voice-btn-3">🤖 Soul</button>
+                <button class="btn btn-voice" id="voice-btn-4">🍪 Cookies</button>
+            </div>
         </div>
 
         <div class="info-panel">
@@ -634,6 +712,43 @@
 
         // Initialize slider displays
         updateSliderDisplays();
+
+        // Voice button controls
+        document.getElementById('voice-btn-1').addEventListener('click', () => {
+            fetch('/api/voice/1', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => console.log('Voice line 1:', data.line))
+            .catch(err => console.error('Error playing voice:', err));
+        });
+
+        document.getElementById('voice-btn-2').addEventListener('click', () => {
+            fetch('/api/voice/2', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => console.log('Voice line 2:', data.line))
+            .catch(err => console.error('Error playing voice:', err));
+        });
+
+        document.getElementById('voice-btn-3').addEventListener('click', () => {
+            fetch('/api/voice/3', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => console.log('Voice line 3:', data.line))
+            .catch(err => console.error('Error playing voice:', err));
+        });
+
+        document.getElementById('voice-btn-4').addEventListener('click', () => {
+            fetch('/api/voice/4', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => console.log('Voice line 4:', data.line))
+            .catch(err => console.error('Error playing voice:', err));
+        });
         
         // Connection status
         function updateConnectionStatus(connected) {

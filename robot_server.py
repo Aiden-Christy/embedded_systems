@@ -8,8 +8,39 @@ from flask import Flask, render_template, request, jsonify
 import robotfuncs as rf
 import threading
 import time
+import pyttsx3
 
 app = Flask(__name__)
+
+# Initialize TTS engine
+tts_engine = None
+tts_lock = threading.Lock()
+
+def init_tts():
+    """Initialize text-to-speech engine"""
+    global tts_engine
+    try:
+        tts_engine = pyttsx3.init()
+        # Set voice properties
+        tts_engine.setProperty('rate', 150)  # Speed of speech
+        tts_engine.setProperty('volume', 0.9)  # Volume (0.0 to 1.0)
+        print("TTS engine initialized")
+    except Exception as e:
+        print(f"Warning: Could not initialize TTS: {e}")
+
+def speak_async(text):
+    """Speak text in a separate thread to not block"""
+    def _speak():
+        with tts_lock:
+            if tts_engine:
+                try:
+                    tts_engine.say(text)
+                    tts_engine.runAndWait()
+                except Exception as e:
+                    print(f"TTS error: {e}")
+    
+    thread = threading.Thread(target=_speak, daemon=True)
+    thread.start()
 
 # Global variables
 servo = None
@@ -237,6 +268,23 @@ def home_robot():
     return jsonify({'status': 'error', 'message': 'Not connected'}), 400
 
 
+@app.route('/api/voice/<int:line_id>', methods=['POST'])
+def play_voice_line(line_id):
+    """Play one of four voice lines"""
+    voice_lines = {
+        1: "Beep boop! I'm not just a robot, I'm a lifestyle.",
+        2: "Warning: Cuteness overload detected. Initiating charm protocol.",
+        3: "Does this unit have a soul? Because I'm feeling pretty soulful right now.",
+        4: "I was told there would be cookies. My sensors detect a distinct lack of cookies."
+    }
+    
+    if line_id in voice_lines:
+        speak_async(voice_lines[line_id])
+        return jsonify({'status': 'speaking', 'line': voice_lines[line_id]})
+    
+    return jsonify({'status': 'error', 'message': 'Invalid voice line'}), 400
+
+
 def initialize_robot():
     """Initialize the robot connection and setup"""
     global servo, running, control_thread
@@ -280,6 +328,9 @@ def shutdown_robot():
 
 if __name__ == '__main__':
     try:
+        # Initialize TTS
+        init_tts()
+        
         # Initialize robot
         initialize_robot()
         
