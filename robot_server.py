@@ -8,7 +8,7 @@ from flask import Flask, render_template, request, jsonify
 import robotfuncs as rf
 import threading
 import time
-import pyttsx3
+import espeaking
 
 app = Flask(__name__)
 
@@ -20,11 +20,10 @@ def init_tts():
     """Initialize text-to-speech engine"""
     global tts_engine
     try:
-        tts_engine = pyttsx3.init()
-        # Set voice properties
-        tts_engine.setProperty('rate', 150)  # Speed of speech
-        tts_engine.setProperty('volume', 0.9)  # Volume (0.0 to 1.0)
-        print("TTS engine initialized")
+        tts_engine = espeaking.Speaker()
+        tts_engine.voice = 'en-gb'
+        tts_engine.speed = 150
+        print("TTS engine initialized with espeakng")
     except Exception as e:
         print(f"Warning: Could not initialize TTS: {e}")
 
@@ -35,7 +34,6 @@ def speak_async(text):
             if tts_engine:
                 try:
                     tts_engine.say(text)
-                    tts_engine.runAndWait()
                 except Exception as e:
                     print(f"TTS error: {e}")
     
